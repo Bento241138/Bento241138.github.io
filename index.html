@@ -323,12 +323,16 @@ function onScanSuccess(code){
 }
 
 async function toggleTorch(){
-  if(!html5QrCode) return;
   try{
+    // ดึง video element ที่ Html5QrCode สร้างไว้ใน #reader
+    const vid=document.querySelector('#reader video');
+    if(!vid||!vid.srcObject) return showToast('twrn','⚠️','กล้องยังไม่พร้อม');
+    const track=vid.srcObject.getVideoTracks()[0];
+    if(!track) return;
     torchOn=!torchOn;
-    await html5QrCode.applyVideoConstraints({ advanced:[{ torch:torchOn }] });
+    await track.applyConstraints({ advanced:[{ torch:torchOn }] });
     document.getElementById('torchBtn').textContent=torchOn?'💡':'🔦';
-  }catch(e){ showToast('twrn','⚠️','ไฟฉายไม่รองรับ'); torchOn=false; }
+  }catch(e){ showToast('twrn','⚠️','ไฟฉายไม่รองรับบนอุปกรณ์นี้'); torchOn=false; }
 }
 
 function badge(m){const e=document.getElementById('camBadge');if(!m){e.style.display='none';return;}e.textContent=m;e.style.display='block';}
@@ -402,6 +406,10 @@ function goTab(t){
 
 // ── TOAST ──
 function showToast(cls,ico,msg){const t=document.getElementById('toast');document.getElementById('tI').textContent=ico;document.getElementById('tM').textContent=msg;t.className=`show ${cls}`;clearTimeout(toastT);toastT=setTimeout(()=>t.className='',3000);}
+
+// ── ซ่อนปุ่มไฟฉายบน iOS (Apple ไม่รองรับ Torch API บน web) ──
+if(/iPad|iPhone|iPod/.test(navigator.userAgent))
+  document.getElementById('torchBtn').style.display='none';
 
 // ── INIT ──
 startCamera();
