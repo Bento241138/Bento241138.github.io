@@ -11,26 +11,36 @@
 <title>เช็คชั้นวาง</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
+<!-- Html5-QRCode: handles camera + decode on iOS & Android natively -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
 :root{--bg:#f7f7f7;--card:#fff;--border:#e8e8e8;--ink:#111;--ink2:#888;--accent:#ff4500;--green:#00a855;--yellow:#e09800;--red:#e01c1c;--r:14px;--safe:env(safe-area-inset-bottom,0px);}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--ink);height:100%;overflow:hidden;}
+
 .tab-bar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);display:flex;padding-bottom:var(--safe);z-index:200;}
 .tb{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;font-size:10px;font-weight:700;color:var(--ink2);cursor:pointer;border:none;background:transparent;font-family:'Sarabun',sans-serif;}
 .tb .i{font-size:22px;margin-bottom:3px;line-height:1;}
 .tb.active{color:var(--accent);}
+
 .screen{position:fixed;inset:0;bottom:calc(58px + var(--safe));overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;}
 .screen.active{display:block;}
 #scr-scan.active{display:flex;flex-direction:column;overflow:hidden;}
 
+/* ── SCAN SCREEN ── */
 .cam-wrap{position:relative;flex:1;min-height:0;background:#000;overflow:hidden;}
-/* CRITICAL iOS: no CSS transforms on video — breaks canvas.drawImage() */
-#camVideo{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;}
-#overlayCanvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;}
-/* grabCanvas: visible in DOM but off-screen — iOS needs this to read pixels */
-#grabCanvas{position:fixed;left:-9999px;top:0;width:640px;height:480px;}
 
+/* Html5QrCode injects its own video inside #reader — override to fill */
+#reader{width:100%!important;height:100%!important;border:none!important;}
+#reader video{width:100%!important;height:100%!important;object-fit:cover!important;}
+#reader img{display:none!important;}
+/* hide default Html5QrCode UI chrome */
+#reader__scan_region{border:none!important;background:transparent!important;}
+#reader__dashboard{display:none!important;}
+#reader__camera_selection{display:none!important;}
+
+.scan-overlay{position:absolute;inset:0;pointer-events:none;z-index:5;}
 .cam-top{position:absolute;top:0;left:0;right:0;padding:12px 16px;background:linear-gradient(to bottom,rgba(0,0,0,.65),transparent);display:flex;align-items:center;justify-content:space-between;z-index:10;}
 .cam-title{color:#fff;font-size:15px;font-weight:700;}
 .torch-btn{background:rgba(255,255,255,.2);border:none;border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;}
@@ -41,7 +51,7 @@ html,body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--ink)
 .ndo .ni{font-size:46px;margin-bottom:10px;}.ndo .nt{font-size:16px;font-weight:700;margin-bottom:6px;}.ndo .ns{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:20px;}
 .ndo button{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:13px 30px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;}
 
-.result-panel{background:var(--card);border-radius:var(--r) var(--r) 0 0;padding:18px 18px 14px;flex-shrink:0;min-height:172px;box-shadow:0 -6px 24px rgba(0,0,0,.18);}
+.result-panel{background:var(--card);border-radius:var(--r) var(--r) 0 0;padding:18px 18px 14px;flex-shrink:0;min-height:168px;box-shadow:0 -6px 24px rgba(0,0,0,.18);}
 .scan-idle{text-align:center;padding:8px 0 4px;color:var(--ink2);}
 .scan-idle .ico{font-size:32px;margin-bottom:6px;}.scan-idle p{font-size:14px;}
 .rs-status{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
@@ -53,11 +63,13 @@ html,body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--ink)
 .chip-v{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;line-height:1;}
 .chip-v.ac{color:var(--accent);}.chip-v.gn{color:var(--green);}.chip-v.yw{color:var(--yellow);}.chip-v.rd{color:var(--red);}
 .chip-l{font-size:10px;color:var(--ink2);margin-top:3px;}
+
 .manual-bar{background:var(--card);border-top:1px solid var(--border);padding:10px 14px;display:flex;gap:8px;flex-shrink:0;}
 .manual-bar input{flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--ink);outline:none;}
 .manual-bar input:focus{border-color:var(--accent);}
 .manual-bar button{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 20px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
 
+/* ── LIST ── */
 .list-top{background:var(--card);padding:14px 16px 0;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;}
 .list-title{font-size:17px;font-weight:700;margin-bottom:10px;}
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--border);}
@@ -82,6 +94,8 @@ html,body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--ink)
 .item-qty{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;}.item-ql{font-size:10px;color:var(--ink2);margin-top:2px;}
 .empty{text-align:center;padding:60px 20px;color:var(--ink2);}
 .empty .e{font-size:38px;margin-bottom:10px;}
+
+/* ── IMPORT ── */
 #scr-import{background:var(--bg);}
 .import-wrap{padding:14px;}
 .icard{background:var(--card);border-radius:var(--r);overflow:hidden;margin-bottom:12px;}
@@ -98,6 +112,8 @@ select{width:100%;background:var(--bg);border:1px solid var(--border);border-rad
 .big-btn{width:100%;padding:15px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:16px;font-weight:700;cursor:pointer;margin-top:4px;}
 .info-box{background:var(--card);border-radius:var(--r);padding:16px;font-size:13px;color:var(--ink2);line-height:1.9;}
 .info-box strong{color:var(--ink);}
+
+/* ── SETTINGS ── */
 #scr-settings{background:var(--bg);}
 .set-wrap{padding:14px;}
 .set-card{background:var(--card);border-radius:var(--r);overflow:hidden;margin-bottom:12px;}
@@ -111,6 +127,12 @@ select{width:100%;background:var(--bg);border:1px solid var(--border);border-rad
 .tthumb{position:absolute;width:22px;height:22px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.2);pointer-events:none;}
 .toggle input:checked~.ttrack .tthumb{transform:translateX(20px);}
 .num-input{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;width:70px;text-align:center;color:var(--ink);outline:none;}
+
+/* SCAN FRAME overlay (drawn on top of Html5QrCode video) */
+.frame-svg{position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);width:260px;height:100px;z-index:6;pointer-events:none;}
+.scan-line{animation:scanmove 2s ease-in-out infinite;}
+@keyframes scanmove{0%{transform:translateY(0);}50%{transform:translateY(80px);}100%{transform:translateY(0);}}
+
 #toast{position:fixed;top:14px;left:14px;right:14px;background:var(--ink);color:#fff;border-radius:12px;padding:13px 18px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.3);transform:translateY(calc(-100% - 30px));opacity:0;transition:all .3s cubic-bezier(.34,1.4,.64,1);}
 #toast.show{transform:translateY(0);opacity:1;}
 #toast.tok{border-left:4px solid var(--green);}#toast.twrn{border-left:4px solid var(--yellow);}#toast.terr{border-left:4px solid var(--red);}
@@ -118,38 +140,58 @@ select{width:100%;background:var(--bg);border:1px solid var(--border);border-rad
 </head>
 <body>
 
+<!-- ── SCAN ── -->
 <div class="screen active" id="scr-scan">
   <div class="cam-wrap" id="camWrap">
-    <video id="camVideo" playsinline muted autoplay webkit-playsinline x5-playsinline></video>
-    <canvas id="overlayCanvas"></canvas>
-    <canvas id="grabCanvas"></canvas>
-    <div class="cam-top">
-      <div class="cam-title">📡 สแกนบาร์โค้ด</div>
-      <button class="torch-btn" id="torchBtn" onclick="toggleTorch()">🔦</button>
+    <!-- Html5QrCode renders camera here -->
+    <div id="reader"></div>
+
+    <!-- Custom overlay on top -->
+    <div class="scan-overlay">
+      <div class="cam-top">
+        <div class="cam-title">📡 สแกนบาร์โค้ด</div>
+        <button class="torch-btn" id="torchBtn" onclick="toggleTorch()">🔦</button>
+      </div>
+
+      <!-- Targeting frame -->
+      <svg class="frame-svg" viewBox="0 0 260 100">
+        <!-- corner brackets -->
+        <path d="M10,30 L10,10 L30,10" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M230,10 L250,10 L250,30" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M10,70 L10,90 L30,90" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M250,70 L250,90 L230,90" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <!-- scan line -->
+        <line class="scan-line" x1="14" y1="10" x2="246" y2="10" stroke="#ff4500" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
+      </svg>
+
+      <div class="cam-badge" id="camBadge"></div>
+      <div class="cam-hint">จัดบาร์โค้ดให้อยู่ในกรอบ</div>
     </div>
-    <div class="cam-badge" id="camBadge"></div>
-    <div class="cam-hint">จัดบาร์โค้ดให้อยู่กลางจอ</div>
+
     <div class="ndo" id="ndo">
       <div class="ni">📂</div><div class="nt">ยังไม่มีข้อมูล</div>
       <div class="ns">นำเข้าไฟล์ CSV ก่อนเริ่มสแกน</div>
       <button onclick="goTab('import')">ไปที่นำเข้าข้อมูล →</button>
     </div>
   </div>
+
   <div class="result-panel">
     <div class="scan-idle" id="scanIdle"><div class="ico">🎯</div><p>พร้อมสแกน — จ่อบาร์โค้ดที่กล้อง</p></div>
     <div id="scanResult" style="display:none">
       <div class="rs-status" id="rsStatus"></div>
-      <div class="rs-name" id="rsName"></div>
-      <div class="rs-code" id="rsCode"></div>
-      <div class="rs-chips" id="rsChips"></div>
+      <div class="rs-name"   id="rsName"></div>
+      <div class="rs-code"   id="rsCode"></div>
+      <div class="rs-chips"  id="rsChips"></div>
     </div>
   </div>
+
   <div class="manual-bar">
     <input type="text" id="manualIn" placeholder="พิมพ์บาร์โค้ดด้วยมือ..." inputmode="text">
     <button onclick="manualScan()">ค้นหา</button>
   </div>
 </div>
 
+<!-- ── LIST ── -->
 <div class="screen" id="scr-list">
   <div class="list-top">
     <div class="list-title">รายการสต๊อก</div>
@@ -169,6 +211,7 @@ select{width:100%;background:var(--bg);border:1px solid var(--border);border-rad
   <div class="items" id="items"></div>
 </div>
 
+<!-- ── IMPORT ── -->
 <div class="screen" id="scr-import">
   <div class="import-wrap">
     <div class="icard">
@@ -190,6 +233,7 @@ select{width:100%;background:var(--bg);border:1px solid var(--border);border-rad
   </div>
 </div>
 
+<!-- ── SETTINGS ── -->
 <div class="screen" id="scr-settings">
   <div class="set-wrap">
     <div class="set-card">
@@ -200,25 +244,27 @@ select{width:100%;background:var(--bg);border:1px solid var(--border);border-rad
     </div>
     <div class="set-card">
       <div class="set-row"><div class="set-info"><div class="set-lbl">สแกนครั้งนี้</div></div><div style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:var(--accent)" id="scanCnt">0</div></div>
-      <div class="set-row"><div class="set-info"><div class="set-lbl">Engine</div><div class="set-sub" id="engineLabel">รอ...</div></div></div>
+      <div class="set-row"><div class="set-info"><div class="set-lbl">เวอร์ชัน</div><div class="set-sub">Html5-QRCode 2.3.8</div></div><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink2)">1.2.0</span></div>
     </div>
   </div>
 </div>
 
+<!-- TAB BAR -->
 <div class="tab-bar">
   <button class="tb active" id="tab-scan"     onclick="goTab('scan')">    <div class="i">📡</div>สแกน</button>
   <button class="tb"        id="tab-list"     onclick="goTab('list')">    <div class="i">📋</div>สต๊อก</button>
   <button class="tb"        id="tab-import"   onclick="goTab('import')">  <div class="i">📂</div>นำเข้า</button>
   <button class="tb"        id="tab-settings" onclick="goTab('settings')"><div class="i">⚙️</div>ตั้งค่า</button>
 </div>
+
 <div id="toast"><span id="tI"></span> <span id="tM"></span></div>
 
 <script>
 // ── STATE ──
 let data=[],rawRows=[],headers=[];
 let soundOn=true,scanCount=0,curFilter='all',lastHL=null;
-let activeStream=null,torchOn=false,scanCooldown=false;
-let toastT,lineAnimReq,pollTimer=null;
+let html5QrCode=null,torchOn=false,scanCooldown=false;
+let toastT;
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 
@@ -227,179 +273,108 @@ const AC=new(window.AudioContext||window.webkitAudioContext)();
 function beep(f,t,d,w='sine',v=.25){const o=AC.createOscillator(),g=AC.createGain();o.type=w;o.connect(g);g.connect(AC.destination);o.frequency.value=f;g.gain.setValueAtTime(v,AC.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+t+d);o.start(AC.currentTime+t);o.stop(AC.currentTime+t+d+.01);}
 function playSound(type){if(!soundOn)return;AC.resume();if(type==='found'){beep(880,0,.07);beep(1100,.09,.14);}if(type==='notfound'){beep(180,0,.5,'sawtooth',.18);}if(type==='low'){[0,.18,.36].forEach(t=>beep(660,t,.1,'sine',.2));}if(type==='out'){[0,.22,.44,.66].forEach((t,i)=>beep(i%2?300:440,t,.18,'square',.14));}}
 
-// ── CAMERA ──
-async function startCamera(){
+// ── Html5QrCode CAMERA ──
+function startCamera(){
   badge('กำลังเปิดกล้อง...');
-  try{
-    if(activeStream){activeStream.getTracks().forEach(t=>t.stop());activeStream=null;}
-    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
-    activeStream=stream;
-    const vid=document.getElementById('camVideo');
-    vid.srcObject=stream;
-    vid.setAttribute('playsinline','');
-    vid.muted=true;
-    await new Promise((res,rej)=>{
-      vid.onloadedmetadata=()=>vid.play().then(res).catch(rej);
-      vid.onerror=rej;
-      setTimeout(()=>rej(new Error('timeout')),10000);
-    });
+
+  html5QrCode = new Html5Qrcode('reader', {
+    verbose: false  // ปิด console spam
+  });
+
+  const config = {
+    fps: 15,         // 15fps พอสำหรับ barcode — ประหยัด battery
+    qrbox: { width: 240, height: 90 },  // กล่อง decode (แนวนอนสำหรับ barcode)
+    aspectRatio: 1.7,
+    formatsToSupport: [
+      Html5QrcodeSupportedFormats.CODE_128,
+      Html5QrcodeSupportedFormats.EAN_13,
+      Html5QrcodeSupportedFormats.EAN_8,
+      Html5QrcodeSupportedFormats.CODE_39,
+      Html5QrcodeSupportedFormats.UPC_A,
+      Html5QrcodeSupportedFormats.UPC_E,
+      Html5QrcodeSupportedFormats.ITF,
+      Html5QrcodeSupportedFormats.CODABAR,
+      Html5QrcodeSupportedFormats.QR_CODE,
+    ]
+  };
+
+  html5QrCode.start(
+    { facingMode: 'environment' },  // กล้องหลัง
+    config,
+    onScanSuccess,   // ✅ สแกนได้
+    ()=>{}           // ❌ ไม่ต้อง handle error (เกิดทุก frame ที่ไม่เจอ barcode)
+  ).then(()=>{
     badge(null);
-    initOverlay();
-    startScanner();
-  }catch(err){
-    if(err.name==='NotAllowedError') badge('❌ กรุณาอนุญาตกล้องใน Settings');
-    else badge('⚠️ เปิดกล้องไม่ได้ — ใช้พิมพ์มือแทน');
-  }
-}
-function badge(m){const e=document.getElementById('camBadge');if(!m){e.style.display='none';return;}e.textContent=m;e.style.display='block';}
-
-// ── SCANNER ENGINE PICKER ──
-function startScanner(){
-  if('BarcodeDetector' in window){
-    document.getElementById('engineLabel').textContent='Native BarcodeDetector (Android)';
-    runNative();
-  } else {
-    // iOS + others: load ZXing then use canvas-polling (the only reliable iOS method)
-    document.getElementById('engineLabel').textContent='กำลังโหลด ZXing...';
-    badge('กำลังโหลด scanner...');
-    loadScript(
-      'https://cdn.jsdelivr.net/npm/@zxing/library@0.19.2/umd/index.min.js',
-      ()=>{ badge(null); document.getElementById('engineLabel').textContent='ZXing canvas-poll (iOS/Universal)'; runZXingPoll(); },
-      ()=>{ badge('⚠️ โหลด scanner ไม่ได้ — ใช้พิมพ์มือแทน'); }
-    );
-  }
-}
-
-function loadScript(src,ok,fail){
-  const s=document.createElement('script');s.src=src;
-  s.onload=ok; s.onerror=fail;
-  document.head.appendChild(s);
-}
-
-// ── NATIVE (Android Chrome) ──
-function runNative(){
-  const bd=new BarcodeDetector({formats:['code_128','ean_13','ean_8','code_39','qr_code','upc_a','upc_e','itf','codabar']});
-  const vid=document.getElementById('camVideo');
-  const loop=async()=>{
-    if(!activeStream)return;
-    if(!scanCooldown&&vid.readyState>=2){
-      try{const r=await bd.detect(vid);if(r.length>0)hit(r[0].rawValue);}catch(e){}
+  }).catch(err=>{
+    console.error(err);
+    if(String(err).includes('permission')||String(err).includes('Permission')||String(err).includes('NotAllowed')){
+      badge('❌ กรุณาอนุญาตกล้องใน Settings');
+    } else {
+      badge('⚠️ เปิดกล้องไม่ได้ — ใช้พิมพ์มือแทน');
     }
-    requestAnimationFrame(loop);
-  };
-  requestAnimationFrame(loop);
+  });
 }
 
-// ── ZXING CANVAS-POLL (iOS Safari fix) ──
-// iOS Safari blocks canvas.drawImage(video) if any CSS transform is on video
-// Solution: draw video onto a separate off-screen canvas every 300ms, then decode that canvas
-let zxReader=null;
-function runZXingPoll(){
-  const ZXing=window.ZXingBrowser||window.ZXing;
-  if(!ZXing){badge('⚠️ ZXing ไม่พร้อม');return;}
-
-  zxReader=new ZXing.BrowserMultiFormatReader();
-  const grab=document.getElementById('grabCanvas');
-  const ctx=grab.getContext('2d',{willReadFrequently:true});
-  const vid=document.getElementById('camVideo');
-
-  const poll=()=>{
-    if(!activeStream||scanCooldown){pollTimer=setTimeout(poll,300);return;}
-    try{
-      // Draw current video frame to off-screen canvas
-      ctx.drawImage(vid,0,0,grab.width,grab.height);
-      // Decode from the ImageData (works on iOS — no cross-origin issue)
-      const imageData=ctx.getImageData(0,0,grab.width,grab.height);
-      const lum=new ZXing.RGBLuminanceSource(imageData.data,grab.width,grab.height);
-      const bmp=new ZXing.HybridBinarizer(lum);
-      const result=new ZXing.MultiFormatReader().decode(new ZXing.BinaryBitmap(bmp));
-      if(result) hit(result.getText());
-    }catch(e){
-      // NotFoundException is normal — means no barcode in frame, ignore
-    }
-    pollTimer=setTimeout(poll,300);
-  };
-  pollTimer=setTimeout(poll,500); // slight delay after camera starts
-}
-
-function hit(code){
-  if(scanCooldown)return;
+function onScanSuccess(code){
+  if(scanCooldown) return;
   scanCooldown=true;
-  flashOverlay();
   doScan(code);
-  setTimeout(()=>{scanCooldown=false;},1800);
+  setTimeout(()=>{ scanCooldown=false; }, 1800);
 }
 
-// ── OVERLAY ──
-function initOverlay(){
-  const c=document.getElementById('overlayCanvas'),w=document.getElementById('camWrap');
-  c.width=w.offsetWidth;c.height=w.offsetHeight;
-  cancelAnimationFrame(lineAnimReq);
-  drawOverlay(c);
-}
-function drawOverlay(c){
-  const ctx=c.getContext('2d'),cw=c.width,ch=c.height;
-  const bw=Math.min(cw*.78,300),bh=90,bx=(cw-bw)/2,by=(ch-bh)/2;
-  ctx.fillStyle='rgba(0,0,0,.4)';
-  ctx.fillRect(0,0,cw,by);ctx.fillRect(0,by+bh,cw,ch-by-bh);
-  ctx.fillRect(0,by,bx,bh);ctx.fillRect(bx+bw,by,cw-bx-bw,bh);
-  const cl=22;ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.lineCap='round';
-  [[bx,by,1,1],[bx+bw,by,-1,1],[bx,by+bh,1,-1],[bx+bw,by+bh,-1,-1]].forEach(([x,y,sx,sy])=>{ctx.beginPath();ctx.moveTo(x+sx*cl,y);ctx.lineTo(x,y);ctx.lineTo(x,y+sy*cl);ctx.stroke();});
-  let ly=by+4,dir=1;
-  const anim=()=>{
-    ctx.clearRect(bx+1,by+1,bw-2,bh-2);
-    ly+=dir*1.4;if(ly>by+bh-6)dir=-1;if(ly<by+4)dir=1;
-    const gr=ctx.createLinearGradient(bx,0,bx+bw,0);
-    gr.addColorStop(0,'transparent');gr.addColorStop(.5,'rgba(255,69,0,.9)');gr.addColorStop(1,'transparent');
-    ctx.fillStyle=gr;ctx.fillRect(bx+2,ly,bw-4,2.5);
-    lineAnimReq=requestAnimationFrame(anim);
-  };anim();
-}
-function flashOverlay(){
-  const c=document.getElementById('overlayCanvas'),ctx=c.getContext('2d');
-  ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(0,0,c.width,c.height);
-  setTimeout(()=>{ctx.clearRect(0,0,c.width,c.height);initOverlay();},150);
-}
 async function toggleTorch(){
-  if(!activeStream)return;
-  try{torchOn=!torchOn;await activeStream.getVideoTracks()[0].applyConstraints({advanced:[{torch:torchOn}]});document.getElementById('torchBtn').textContent=torchOn?'💡':'🔦';}
-  catch(e){showToast('twrn','⚠️','ไฟฉายไม่รองรับ');}
+  if(!html5QrCode) return;
+  try{
+    torchOn=!torchOn;
+    await html5QrCode.applyVideoConstraints({ advanced:[{ torch:torchOn }] });
+    document.getElementById('torchBtn').textContent=torchOn?'💡':'🔦';
+  }catch(e){ showToast('twrn','⚠️','ไฟฉายไม่รองรับ'); torchOn=false; }
 }
-window.addEventListener('resize',()=>{if(activeStream)initOverlay();});
+
+function badge(m){const e=document.getElementById('camBadge');if(!m){e.style.display='none';return;}e.textContent=m;e.style.display='block';}
 
 // ── SCAN RESULT ──
 function doScan(code){
-  if(!code||!code.trim())return;code=code.trim();
+  if(!code||!code.trim()) return;
+  code=code.trim();
   if(data.length===0){document.getElementById('ndo').classList.add('show');playSound('notfound');return;}
-  scanCount++;document.getElementById('scanCnt').textContent=scanCount;
+  scanCount++;
+  document.getElementById('scanCnt').textContent=scanCount;
   const thr=parseInt(document.getElementById('thr').value)||5;
   const item=data.find(i=>i.barcode===code);
   document.getElementById('scanIdle').style.display='none';
   document.getElementById('scanResult').style.display='block';
   if(!item){
     playSound('notfound');
-    document.getElementById('rsStatus').className='rs-status nf';document.getElementById('rsStatus').textContent='✖ ไม่พบในระบบ';
-    document.getElementById('rsName').textContent='ไม่มีบาร์โค้ดนี้';document.getElementById('rsCode').textContent=code;document.getElementById('rsChips').innerHTML='';
-    showToast('terr','❌',`ไม่พบ: ${code}`);return;
+    document.getElementById('rsStatus').className='rs-status nf';
+    document.getElementById('rsStatus').textContent='✖ ไม่พบในระบบ';
+    document.getElementById('rsName').textContent='ไม่มีบาร์โค้ดนี้';
+    document.getElementById('rsCode').textContent=code;
+    document.getElementById('rsChips').innerHTML='';
+    showToast('terr','❌',`ไม่พบ: ${code}`);
+    return;
   }
-  const hq=item.qty!==null,qty=item.qty;
+  const hq=item.qty!==null, qty=item.qty;
   let cls,txt,snd;
-  if(!hq){cls='ok';txt='✔ พบสินค้า';snd='found';}
-  else if(qty===0){cls='out';txt='🚨 หมดสต๊อก!';snd='out';}
-  else if(qty<=thr){cls='low';txt='⚠️ เหลือน้อย';snd='low';}
-  else{cls='ok';txt='✔ พบสินค้า';snd='found';}
+  if(!hq)        { cls='ok'; txt='✔ พบสินค้า';    snd='found'; }
+  else if(qty===0){ cls='out';txt='🚨 หมดสต๊อก!';  snd='out';   }
+  else if(qty<=thr){ cls='low';txt='⚠️ เหลือน้อย'; snd='low';   }
+  else           { cls='ok'; txt='✔ พบสินค้า';    snd='found'; }
   playSound(snd);
-  document.getElementById('rsStatus').className=`rs-status ${cls}`;document.getElementById('rsStatus').textContent=txt;
-  document.getElementById('rsName').textContent=item.name;document.getElementById('rsCode').textContent=item.barcode;
+  document.getElementById('rsStatus').className=`rs-status ${cls}`;
+  document.getElementById('rsStatus').textContent=txt;
+  document.getElementById('rsName').textContent=item.name;
+  document.getElementById('rsCode').textContent=item.barcode;
   const qc=qty===0?'rd':qty<=thr?'yw':'gn';
   let chips=`<div class="chip"><div class="chip-v ac">${item.box||'—'}</div><div class="chip-l">Box/ชั้น</div></div>`;
-  if(hq)chips+=`<div class="chip"><div class="chip-v ${qc}">${qty}</div><div class="chip-l">คงเหลือ</div></div>`;
+  if(hq) chips+=`<div class="chip"><div class="chip-v ${qc}">${qty}</div><div class="chip-l">คงเหลือ</div></div>`;
   document.getElementById('rsChips').innerHTML=chips;
-  if(snd==='out')showToast('terr','🚨',`"${item.name}" หมดสต๊อก!`);
-  else if(snd==='low')showToast('twrn','⚠️',`"${item.name}" เหลือ ${qty} ชิ้น`);
+  if(snd==='out') showToast('terr','🚨',`"${item.name}" หมดสต๊อก!`);
+  else if(snd==='low') showToast('twrn','⚠️',`"${item.name}" เหลือ ${qty} ชิ้น`);
   else showToast('tok','✔',`${item.name} — Box: ${item.box}`);
   lastHL=item.barcode;
 }
+
 function manualScan(){const v=document.getElementById('manualIn').value.trim();if(!v)return;doScan(v);document.getElementById('manualIn').value='';}
 document.getElementById('manualIn').addEventListener('keydown',e=>{if(e.key==='Enter')manualScan();});
 
@@ -417,11 +392,18 @@ function setF(f,btn){curFilter=f;document.querySelectorAll('.fp').forEach(b=>b.c
 function clearAll(){if(!confirm('ล้างข้อมูลทั้งหมด?'))return;data=[];rawRows=[];headers=[];document.getElementById('ndo').classList.add('show');document.getElementById('csvStat').className='csv-stat';document.getElementById('dataInfo').textContent='ยังไม่มีข้อมูล';renderList();showToast('twrn','🗑','ล้างข้อมูลแล้ว');}
 
 // ── TABS ──
-function goTab(t){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));document.getElementById('scr-'+t).classList.add('active');document.getElementById('tab-'+t).classList.add('active');if(t==='list')renderList();}
+function goTab(t){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('scr-'+t).classList.add('active');
+  document.getElementById('tab-'+t).classList.add('active');
+  if(t==='list') renderList();
+}
 
 // ── TOAST ──
 function showToast(cls,ico,msg){const t=document.getElementById('toast');document.getElementById('tI').textContent=ico;document.getElementById('tM').textContent=msg;t.className=`show ${cls}`;clearTimeout(toastT);toastT=setTimeout(()=>t.className='',3000);}
 
+// ── INIT ──
 startCamera();
 </script>
 </body>
