@@ -126,9 +126,12 @@ html,body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--ink)
 .import-wrap{padding:14px;}
 .icard{background:var(--card);border-radius:var(--r);overflow:hidden;margin-bottom:12px;}
 .icard-head{padding:13px 16px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--ink2);letter-spacing:1px;text-transform:uppercase;}
-.dz{margin:14px;padding:28px 16px;text-align:center;cursor:pointer;border:2px dashed var(--border);border-radius:12px;background:var(--bg);position:relative;}
-.dz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
-.dz .di{font-size:38px;margin-bottom:6px;}.dz .dt{font-size:15px;font-weight:600;margin-bottom:4px;}.dz .ds{font-size:12px;color:var(--ink2);}
+.dz{margin:14px;padding:0;text-align:center;border-radius:12px;background:var(--bg);overflow:hidden;}
+.dz-btn{display:block;width:100%;padding:28px 16px;background:transparent;border:2px dashed var(--border);border-radius:12px;cursor:pointer;text-align:center;-webkit-appearance:none;appearance:none;}
+.dz-btn:active{background:rgba(255,69,0,.06);border-color:var(--accent);}
+.dz .di{font-size:38px;margin-bottom:6px;}.dz .dt{font-size:15px;font-weight:600;margin-bottom:4px;color:var(--ink);}.dz .ds{font-size:12px;color:var(--ink2);}
+/* ปุ่มแยกสำหรับ Android ที่ hidden input มีปัญหา */
+.file-btn{display:block;width:calc(100% - 28px);margin:0 14px 14px;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:16px;font-weight:700;cursor:pointer;text-align:center;}
 .csv-stat{margin:0 14px 14px;padding:11px 13px;border-radius:10px;font-size:13px;font-weight:600;display:none;}
 .csv-stat.ok{display:block;background:#e8f8f0;color:var(--green);border:1px solid #a0ddb8;}
 .csv-stat.err{display:block;background:#fdf0f0;color:var(--red);border:1px solid #f0b8b8;}
@@ -267,7 +270,15 @@ select{width:100%;background:var(--bg);border:1px solid var(--border);border-rad
   <div class="import-wrap">
     <div class="icard">
       <div class="icard-head">📂 นำเข้าไฟล์ CSV</div>
-      <div class="dz"><input type="file" accept=".csv" onchange="handleFile(this.files[0])"><div class="di">📄</div><div class="dt">แตะเพื่อเลือกไฟล์</div><div class="ds">รองรับ .csv — UTF-8 / TIS-620</div></div>
+      <div class="dz">
+        <label class="dz-btn" for="fileInput">
+          <div class="di">📄</div>
+          <div class="dt">แตะเพื่อเลือกไฟล์ CSV</div>
+          <div class="ds">รองรับ .csv — UTF-8 / TIS-620</div>
+        </label>
+      </div>
+      <input type="file" id="fileInput" accept=".csv,.txt" style="display:none" onchange="handleFile(this.files[0])">
+      <button class="file-btn" onclick="document.getElementById('fileInput').click()">📂 เลือกไฟล์ CSV</button>
       <div class="csv-stat" id="csvStat"></div>
     </div>
     <div class="icard" id="mapCard" style="display:none">
