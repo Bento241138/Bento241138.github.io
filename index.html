@@ -11,7 +11,6 @@
 <title>เช็คชั้นวาง</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<!-- Html5-QRCode: handles camera + decode on iOS & Android natively -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
@@ -23,53 +22,80 @@ html,body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--ink)
 .tb{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;font-size:10px;font-weight:700;color:var(--ink2);cursor:pointer;border:none;background:transparent;font-family:'Sarabun',sans-serif;}
 .tb .i{font-size:22px;margin-bottom:3px;line-height:1;}
 .tb.active{color:var(--accent);}
-
 .screen{position:fixed;inset:0;bottom:calc(58px + var(--safe));overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;}
 .screen.active{display:block;}
 #scr-scan.active{display:flex;flex-direction:column;overflow:hidden;}
 
-/* ── SCAN SCREEN ── */
-.cam-wrap{position:relative;flex:1;min-height:0;background:#000;overflow:hidden;}
+/* MODE BAR */
+.mode-bar{display:flex;gap:0;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0;}
+.mode-btn{flex:1;padding:12px 4px;font-size:13px;font-weight:700;border:none;background:transparent;color:var(--ink2);cursor:pointer;font-family:'Sarabun',sans-serif;border-bottom:3px solid transparent;transition:all .15s;}
+.mode-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
 
-/* Html5QrCode injects its own video inside #reader — override to fill */
+/* CAMERA MODE */
+.mode-panel{flex:1;min-height:0;display:flex;flex-direction:column;}
+.cam-wrap{position:relative;flex:1;min-height:0;background:#111;overflow:hidden;}
 #reader{width:100%!important;height:100%!important;border:none!important;}
 #reader video{width:100%!important;height:100%!important;object-fit:cover!important;}
 #reader img{display:none!important;}
-/* hide default Html5QrCode UI chrome */
 #reader__scan_region{border:none!important;background:transparent!important;}
 #reader__dashboard{display:none!important;}
-#reader__camera_selection{display:none!important;}
-
 .scan-overlay{position:absolute;inset:0;pointer-events:none;z-index:5;}
-.cam-top{position:absolute;top:0;left:0;right:0;padding:12px 16px;background:linear-gradient(to bottom,rgba(0,0,0,.65),transparent);display:flex;align-items:center;justify-content:space-between;z-index:10;}
-.cam-title{color:#fff;font-size:15px;font-weight:700;}
-.torch-btn{background:rgba(255,255,255,.2);border:none;border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;}
-.cam-hint{position:absolute;bottom:14px;left:0;right:0;text-align:center;color:rgba(255,255,255,.75);font-size:13px;z-index:10;}
-.cam-badge{position:absolute;top:56px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;border-radius:20px;padding:6px 18px;font-size:12px;z-index:10;white-space:nowrap;display:none;}
+.cam-top{position:absolute;top:0;left:0;right:0;padding:12px 16px;background:linear-gradient(to bottom,rgba(0,0,0,.65),transparent);display:flex;align-items:center;justify-content:space-between;pointer-events:all;}
+.cam-title{color:#fff;font-size:14px;font-weight:700;}
+.torch-btn{background:rgba(255,255,255,.2);border:none;border-radius:50%;width:36px;height:36px;font-size:17px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;pointer-events:all;}
+.cam-hint{position:absolute;bottom:12px;left:0;right:0;text-align:center;color:rgba(255,255,255,.75);font-size:13px;}
+.cam-badge{position:absolute;top:54px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;border-radius:20px;padding:5px 16px;font-size:12px;white-space:nowrap;display:none;}
+.frame-svg{position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);width:260px;height:100px;pointer-events:none;}
+.scan-line{animation:scanmove 2s ease-in-out infinite;}
+@keyframes scanmove{0%{transform:translateY(0);}50%{transform:translateY(80px);}100%{transform:translateY(0);}}
+
+/* START BUTTON OVERLAY */
+.cam-start{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:15;}
+.cam-start button{background:var(--accent);color:#fff;border:none;border-radius:14px;padding:16px 36px;font-family:'Sarabun',sans-serif;font-size:17px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(255,69,0,.4);}
+.cam-start.hidden{display:none;}
+
+/* STOP BUTTON */
+.cam-stop{position:absolute;bottom:14px;right:14px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:10px;padding:8px 16px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;z-index:15;pointer-events:all;}
+
 .ndo{position:absolute;inset:0;background:rgba(0,0,0,.82);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:28px;z-index:20;}
 .ndo.show{display:flex;}
 .ndo .ni{font-size:46px;margin-bottom:10px;}.ndo .nt{font-size:16px;font-weight:700;margin-bottom:6px;}.ndo .ns{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:20px;}
 .ndo button{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:13px 30px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;}
 
-.result-panel{background:var(--card);border-radius:var(--r) var(--r) 0 0;padding:18px 18px 14px;flex-shrink:0;min-height:168px;box-shadow:0 -6px 24px rgba(0,0,0,.18);}
-.scan-idle{text-align:center;padding:8px 0 4px;color:var(--ink2);}
-.scan-idle .ico{font-size:32px;margin-bottom:6px;}.scan-idle p{font-size:14px;}
-.rs-status{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+/* GUN MODE */
+.gun-panel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:10px;position:relative;}
+.gun-icon{font-size:56px;}
+.gun-title{font-size:18px;font-weight:700;}
+.gun-sub{font-size:13px;color:var(--ink2);text-align:center;}
+.gun-status{display:flex;align-items:center;gap:8px;margin-top:8px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:8px 20px;font-size:13px;font-weight:600;}
+.gun-dot{width:10px;height:10px;border-radius:50%;background:var(--green);animation:pulse 1.5s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.gun-last{margin-top:16px;background:var(--card);border-radius:12px;padding:12px 20px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink2);display:none;}
+
+/* HAND MODE */
+.hand-panel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:12px;}
+.hand-icon{font-size:52px;}
+.hand-title{font-size:18px;font-weight:700;margin-bottom:4px;}
+.hand-row{display:flex;gap:10px;width:100%;max-width:380px;}
+.hand-row input{flex:1;background:var(--card);border:2px solid var(--border);border-radius:12px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--ink);outline:none;}
+.hand-row input:focus{border-color:var(--accent);}
+.hand-row button{background:var(--accent);color:#fff;border:none;border-radius:12px;padding:14px 22px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;}
+
+/* RESULT */
+.result-panel{background:var(--card);border-radius:var(--r) var(--r) 0 0;padding:16px 18px 14px;flex-shrink:0;min-height:158px;box-shadow:0 -4px 20px rgba(0,0,0,.12);}
+.scan-idle{text-align:center;padding:6px 0;color:var(--ink2);}
+.scan-idle .ico{font-size:28px;margin-bottom:5px;}.scan-idle p{font-size:13px;}
+.rs-status{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
 .rs-status.ok{color:var(--green);}.rs-status.low{color:var(--yellow);}.rs-status.out,.rs-status.nf{color:var(--red);}
-.rs-name{font-size:20px;font-weight:700;line-height:1.2;margin-bottom:3px;}
-.rs-code{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink2);margin-bottom:12px;}
+.rs-name{font-size:19px;font-weight:700;line-height:1.2;margin-bottom:3px;}
+.rs-code{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink2);margin-bottom:10px;}
 .rs-chips{display:flex;gap:10px;flex-wrap:wrap;}
-.chip{background:var(--bg);border-radius:10px;padding:10px 14px;min-width:76px;}
-.chip-v{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;line-height:1;}
+.chip{background:var(--bg);border-radius:10px;padding:9px 14px;min-width:72px;}
+.chip-v{font-family:'JetBrains Mono',monospace;font-size:21px;font-weight:700;line-height:1;}
 .chip-v.ac{color:var(--accent);}.chip-v.gn{color:var(--green);}.chip-v.yw{color:var(--yellow);}.chip-v.rd{color:var(--red);}
 .chip-l{font-size:10px;color:var(--ink2);margin-top:3px;}
 
-.manual-bar{background:var(--card);border-top:1px solid var(--border);padding:10px 14px;display:flex;gap:8px;flex-shrink:0;}
-.manual-bar input{flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--ink);outline:none;}
-.manual-bar input:focus{border-color:var(--accent);}
-.manual-bar button{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 20px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
-
-/* ── LIST ── */
+/* LIST */
 .list-top{background:var(--card);padding:14px 16px 0;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;}
 .list-title{font-size:17px;font-weight:700;margin-bottom:10px;}
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--border);}
@@ -95,7 +121,7 @@ html,body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--ink)
 .empty{text-align:center;padding:60px 20px;color:var(--ink2);}
 .empty .e{font-size:38px;margin-bottom:10px;}
 
-/* ── IMPORT ── */
+/* IMPORT */
 #scr-import{background:var(--bg);}
 .import-wrap{padding:14px;}
 .icard{background:var(--card);border-radius:var(--r);overflow:hidden;margin-bottom:12px;}
@@ -113,7 +139,7 @@ select{width:100%;background:var(--bg);border:1px solid var(--border);border-rad
 .info-box{background:var(--card);border-radius:var(--r);padding:16px;font-size:13px;color:var(--ink2);line-height:1.9;}
 .info-box strong{color:var(--ink);}
 
-/* ── SETTINGS ── */
+/* SETTINGS */
 #scr-settings{background:var(--bg);}
 .set-wrap{padding:14px;}
 .set-card{background:var(--card);border-radius:var(--r);overflow:hidden;margin-bottom:12px;}
@@ -128,11 +154,6 @@ select{width:100%;background:var(--bg);border:1px solid var(--border);border-rad
 .toggle input:checked~.ttrack .tthumb{transform:translateX(20px);}
 .num-input{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;width:70px;text-align:center;color:var(--ink);outline:none;}
 
-/* SCAN FRAME overlay (drawn on top of Html5QrCode video) */
-.frame-svg{position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);width:260px;height:100px;z-index:6;pointer-events:none;}
-.scan-line{animation:scanmove 2s ease-in-out infinite;}
-@keyframes scanmove{0%{transform:translateY(0);}50%{transform:translateY(80px);}100%{transform:translateY(0);}}
-
 #toast{position:fixed;top:14px;left:14px;right:14px;background:var(--ink);color:#fff;border-radius:12px;padding:13px 18px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.3);transform:translateY(calc(-100% - 30px));opacity:0;transition:all .3s cubic-bezier(.34,1.4,.64,1);}
 #toast.show{transform:translateY(0);opacity:1;}
 #toast.tok{border-left:4px solid var(--green);}#toast.twrn{border-left:4px solid var(--yellow);}#toast.terr{border-left:4px solid var(--red);}
@@ -142,52 +163,82 @@ select{width:100%;background:var(--bg);border:1px solid var(--border);border-rad
 
 <!-- ── SCAN ── -->
 <div class="screen active" id="scr-scan">
-  <div class="cam-wrap" id="camWrap">
-    <!-- Html5QrCode renders camera here -->
-    <div id="reader"></div>
 
-    <!-- Custom overlay on top -->
-    <div class="scan-overlay">
-      <div class="cam-top">
-        <div class="cam-title">📡 สแกนบาร์โค้ด</div>
-        <button class="torch-btn" id="torchBtn" onclick="toggleTorch()">🔦</button>
+  <!-- MODE SELECTOR -->
+  <div class="mode-bar">
+    <button class="mode-btn active" id="mBtn-cam"  onclick="setMode('cam')">📷 กล้อง</button>
+    <button class="mode-btn"        id="mBtn-gun"  onclick="setMode('gun')">🔫 ปืนสแกน</button>
+    <button class="mode-btn"        id="mBtn-hand" onclick="setMode('hand')">⌨️ พิมพ์มือ</button>
+  </div>
+
+  <!-- CAMERA MODE -->
+  <div id="mode-cam" class="mode-panel">
+    <div class="cam-wrap" id="camWrap">
+      <div id="reader"></div>
+      <div class="scan-overlay">
+        <div class="cam-top">
+          <div class="cam-title" id="camTitle">📷 กล้องปิดอยู่</div>
+          <button class="torch-btn" id="torchBtn" onclick="toggleTorch()">🔦</button>
+        </div>
+        <svg class="frame-svg" viewBox="0 0 260 100">
+          <path d="M10,30 L10,10 L30,10" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M230,10 L250,10 L250,30" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M10,70 L10,90 L30,90" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M250,70 L250,90 L230,90" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <line class="scan-line" x1="14" y1="10" x2="246" y2="10" stroke="#ff4500" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
+        </svg>
+        <div class="cam-badge" id="camBadge"></div>
+        <div class="cam-hint" id="camHint">จัดบาร์โค้ดให้อยู่ในกรอบ</div>
+        <button class="cam-stop" id="camStop" onclick="stopCamera()" style="display:none">■ ปิดกล้อง</button>
       </div>
-
-      <!-- Targeting frame -->
-      <svg class="frame-svg" viewBox="0 0 260 100">
-        <!-- corner brackets -->
-        <path d="M10,30 L10,10 L30,10" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <path d="M230,10 L250,10 L250,30" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <path d="M10,70 L10,90 L30,90" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <path d="M250,70 L250,90 L230,90" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <!-- scan line -->
-        <line class="scan-line" x1="14" y1="10" x2="246" y2="10" stroke="#ff4500" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
-      </svg>
-
-      <div class="cam-badge" id="camBadge"></div>
-      <div class="cam-hint">จัดบาร์โค้ดให้อยู่ในกรอบ</div>
-    </div>
-
-    <div class="ndo" id="ndo">
-      <div class="ni">📂</div><div class="nt">ยังไม่มีข้อมูล</div>
-      <div class="ns">นำเข้าไฟล์ CSV ก่อนเริ่มสแกน</div>
-      <button onclick="goTab('import')">ไปที่นำเข้าข้อมูล →</button>
+      <!-- START OVERLAY -->
+      <div class="cam-start" id="camStart">
+        <button onclick="startCamera()">📷 เปิดกล้องสแกน</button>
+      </div>
+      <div class="ndo" id="ndo">
+        <div class="ni">📂</div><div class="nt">ยังไม่มีข้อมูล</div>
+        <div class="ns">นำเข้าไฟล์ CSV ก่อนเริ่มสแกน</div>
+        <button onclick="goTab('import')">ไปที่นำเข้าข้อมูล →</button>
+      </div>
     </div>
   </div>
 
+  <!-- GUN MODE -->
+  <div id="mode-gun" class="mode-panel" style="display:none">
+    <div class="gun-panel">
+      <div class="gun-icon">🔫</div>
+      <div class="gun-title">โหมดปืนสแกน</div>
+      <div class="gun-sub">เชื่อมต่อปืนสแกน แล้วยิงบาร์โค้ดได้เลย<br>รับค่าอัตโนมัติ ไม่ต้องกดปุ่มเพิ่ม</div>
+      <div class="gun-status"><span class="gun-dot"></span> พร้อมรับสัญญาณ</div>
+      <div class="gun-last" id="gunLast"></div>
+      <!-- hidden input รับ keyboard จากปืนสแกน -->
+      <input id="gunInput" type="text" autocomplete="off" autocorrect="off"
+             spellcheck="false" inputmode="none"
+             style="position:absolute;opacity:0;width:1px;height:1px;top:0;left:0;">
+    </div>
+  </div>
+
+  <!-- HAND MODE -->
+  <div id="mode-hand" class="mode-panel" style="display:none">
+    <div class="hand-panel">
+      <div class="hand-icon">⌨️</div>
+      <div class="hand-title">พิมพ์บาร์โค้ด</div>
+      <div class="hand-row">
+        <input type="text" id="handIn" placeholder="กรอกบาร์โค้ด..." inputmode="text" autocomplete="off">
+        <button onclick="handScan()">ค้นหา</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT (shared) -->
   <div class="result-panel">
-    <div class="scan-idle" id="scanIdle"><div class="ico">🎯</div><p>พร้อมสแกน — จ่อบาร์โค้ดที่กล้อง</p></div>
+    <div class="scan-idle" id="scanIdle"><div class="ico">🎯</div><p>เลือกโหมดแล้วสแกนได้เลย</p></div>
     <div id="scanResult" style="display:none">
       <div class="rs-status" id="rsStatus"></div>
       <div class="rs-name"   id="rsName"></div>
       <div class="rs-code"   id="rsCode"></div>
       <div class="rs-chips"  id="rsChips"></div>
     </div>
-  </div>
-
-  <div class="manual-bar">
-    <input type="text" id="manualIn" placeholder="พิมพ์บาร์โค้ดด้วยมือ..." inputmode="text">
-    <button onclick="manualScan()">ค้นหา</button>
   </div>
 </div>
 
@@ -244,106 +295,185 @@ select{width:100%;background:var(--bg);border:1px solid var(--border);border-rad
     </div>
     <div class="set-card">
       <div class="set-row"><div class="set-info"><div class="set-lbl">สแกนครั้งนี้</div></div><div style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:var(--accent)" id="scanCnt">0</div></div>
-      <div class="set-row"><div class="set-info"><div class="set-lbl">เวอร์ชัน</div><div class="set-sub">Html5-QRCode 2.3.8</div></div><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink2)">1.2.0</span></div>
+      <div class="set-row"><div class="set-info"><div class="set-lbl">เวอร์ชัน</div><div class="set-sub">Html5-QRCode + Gun mode</div></div><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink2)">1.3.0</span></div>
     </div>
   </div>
 </div>
 
-<!-- TAB BAR -->
 <div class="tab-bar">
   <button class="tb active" id="tab-scan"     onclick="goTab('scan')">    <div class="i">📡</div>สแกน</button>
   <button class="tb"        id="tab-list"     onclick="goTab('list')">    <div class="i">📋</div>สต๊อก</button>
   <button class="tb"        id="tab-import"   onclick="goTab('import')">  <div class="i">📂</div>นำเข้า</button>
   <button class="tb"        id="tab-settings" onclick="goTab('settings')"><div class="i">⚙️</div>ตั้งค่า</button>
 </div>
-
 <div id="toast"><span id="tI"></span> <span id="tM"></span></div>
 
 <script>
 // ── STATE ──
 let data=[],rawRows=[],headers=[];
 let soundOn=true,scanCount=0,curFilter='all',lastHL=null;
-let html5QrCode=null,torchOn=false,scanCooldown=false;
-let toastT;
+let html5QrCode=null,camRunning=false,torchOn=false,scanCooldown=false;
+let curMode='cam',toastT;
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 
 // ── AUDIO ──
 const AC=new(window.AudioContext||window.webkitAudioContext)();
-function beep(f,t,d,w='sine',v=.25){const o=AC.createOscillator(),g=AC.createGain();o.type=w;o.connect(g);g.connect(AC.destination);o.frequency.value=f;g.gain.setValueAtTime(v,AC.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+t+d);o.start(AC.currentTime+t);o.stop(AC.currentTime+t+d+.01);}
-function playSound(type){if(!soundOn)return;AC.resume();if(type==='found'){beep(880,0,.07);beep(1100,.09,.14);}if(type==='notfound'){beep(180,0,.5,'sawtooth',.18);}if(type==='low'){[0,.18,.36].forEach(t=>beep(660,t,.1,'sine',.2));}if(type==='out'){[0,.22,.44,.66].forEach((t,i)=>beep(i%2?300:440,t,.18,'square',.14));}}
+function beep(f,t,d,w='sine',v=0.9){
+  const o=AC.createOscillator(),g=AC.createGain(),comp=AC.createDynamicsCompressor();
+  o.type=w;o.frequency.value=f;
+  o.connect(g);g.connect(comp);comp.connect(AC.destination);
+  g.gain.setValueAtTime(v,AC.currentTime+t);
+  g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+t+d);
+  o.start(AC.currentTime+t);o.stop(AC.currentTime+t+d+0.05);
+}
+function playSound(type){
+  if(!soundOn)return;AC.resume();
+  if(type==='found'){beep(880,0,.10,'sine',0.9);beep(1320,.12,.18,'sine',0.9);}
+  if(type==='notfound'){beep(220,0,.5,'sawtooth',0.85);beep(180,.1,.4,'sawtooth',0.7);}
+  if(type==='low'){[0,.20,.40].forEach(t=>beep(880,t,.15,'square',0.85));}
+  if(type==='out'){[0,.22,.44,.66,.88].forEach((t,i)=>beep(i%2?350:660,t,.18,'square',0.95));}
+}
 
-// ── Html5QrCode CAMERA ──
-function startCamera(){
-  badge('กำลังเปิดกล้อง...');
-
-  html5QrCode = new Html5Qrcode('reader', {
-    verbose: false  // ปิด console spam
+// ── MODE SWITCHER ──
+function setMode(m){
+  if(m!=='cam' && camRunning) stopCamera();
+  curMode=m;
+  ['cam','gun','hand'].forEach(x=>{
+    document.getElementById('mode-'+x).style.display=x===m?'flex':'none';
+    document.getElementById('mBtn-'+x).classList.toggle('active',x===m);
   });
+  if(m==='gun'){
+    // focus hidden input so gun keystrokes are captured
+    setTimeout(()=>document.getElementById('gunInput').focus(),100);
+  }
+  if(m==='hand'){
+    setTimeout(()=>document.getElementById('handIn').focus(),100);
+  }
+}
 
-  const config = {
-    fps: 15,         // 15fps พอสำหรับ barcode — ประหยัด battery
-    qrbox: { width: 240, height: 90 },  // กล่อง decode (แนวนอนสำหรับ barcode)
-    aspectRatio: 1.7,
-    formatsToSupport: [
-      Html5QrcodeSupportedFormats.CODE_128,
-      Html5QrcodeSupportedFormats.EAN_13,
-      Html5QrcodeSupportedFormats.EAN_8,
-      Html5QrcodeSupportedFormats.CODE_39,
-      Html5QrcodeSupportedFormats.UPC_A,
-      Html5QrcodeSupportedFormats.UPC_E,
-      Html5QrcodeSupportedFormats.ITF,
-      Html5QrcodeSupportedFormats.CODABAR,
-      Html5QrcodeSupportedFormats.QR_CODE,
-    ]
-  };
+// ── CAMERA ──
+function startCamera(){
+  if(camRunning) return;
+  document.getElementById('camStart').classList.add('hidden');
+  badge('กำลังเปิดกล้อง...');
+  document.getElementById('camTitle').textContent='📷 กำลังเปิด...';
 
+  html5QrCode = new Html5Qrcode('reader',{verbose:false});
   html5QrCode.start(
-    { facingMode: 'environment' },  // กล้องหลัง
-    config,
-    onScanSuccess,   // ✅ สแกนได้
-    ()=>{}           // ❌ ไม่ต้อง handle error (เกิดทุก frame ที่ไม่เจอ barcode)
+    {facingMode:'environment'},
+    {fps:15, qrbox:{width:240,height:90}, aspectRatio:1.7,
+     formatsToSupport:[
+       Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.EAN_13,
+       Html5QrcodeSupportedFormats.EAN_8,    Html5QrcodeSupportedFormats.CODE_39,
+       Html5QrcodeSupportedFormats.UPC_A,    Html5QrcodeSupportedFormats.UPC_E,
+       Html5QrcodeSupportedFormats.ITF,      Html5QrcodeSupportedFormats.CODABAR,
+       Html5QrcodeSupportedFormats.QR_CODE,
+     ]},
+    onScanSuccess, ()=>{}
   ).then(()=>{
+    camRunning=true;
     badge(null);
+    document.getElementById('camTitle').textContent='📷 กำลังสแกน...';
+    document.getElementById('camHint').textContent='จัดบาร์โค้ดให้อยู่ในกรอบ';
+    document.getElementById('camStop').style.display='block';
   }).catch(err=>{
-    console.error(err);
-    if(String(err).includes('permission')||String(err).includes('Permission')||String(err).includes('NotAllowed')){
+    document.getElementById('camStart').classList.remove('hidden');
+    document.getElementById('camTitle').textContent='📷 กล้องปิดอยู่';
+    if(String(err).toLowerCase().includes('permission')||String(err).toLowerCase().includes('notallowed')){
       badge('❌ กรุณาอนุญาตกล้องใน Settings');
     } else {
-      badge('⚠️ เปิดกล้องไม่ได้ — ใช้พิมพ์มือแทน');
+      badge('⚠️ เปิดกล้องไม่ได้');
     }
+    console.error(err);
   });
+}
+
+function stopCamera(){
+  if(!html5QrCode||!camRunning) return;
+  html5QrCode.stop().then(()=>{
+    html5QrCode.clear();
+    html5QrCode=null;
+    camRunning=false;
+    torchOn=false;
+    document.getElementById('torchBtn').textContent='🔦';
+    document.getElementById('camStart').classList.remove('hidden');
+    document.getElementById('camStop').style.display='none';
+    document.getElementById('camTitle').textContent='📷 กล้องปิดอยู่';
+    document.getElementById('camHint').textContent='';
+    badge(null);
+  }).catch(()=>{});
 }
 
 function onScanSuccess(code){
   if(scanCooldown) return;
   scanCooldown=true;
   doScan(code);
-  setTimeout(()=>{ scanCooldown=false; }, 1800);
+  setTimeout(()=>{ scanCooldown=false; },1800);
 }
 
+// ── TORCH ──
 async function toggleTorch(){
   try{
-    // ดึง video element ที่ Html5QrCode สร้างไว้ใน #reader
     const vid=document.querySelector('#reader video');
-    if(!vid||!vid.srcObject) return showToast('twrn','⚠️','กล้องยังไม่พร้อม');
+    if(!vid||!vid.srcObject) return showToast('twrn','⚠️','กล้องยังไม่เปิด');
     const track=vid.srcObject.getVideoTracks()[0];
     if(!track) return;
+    const caps=track.getCapabilities?track.getCapabilities():{};
+    if(!caps.torch) return showToast('twrn','⚠️','กล้องนี้ไม่รองรับไฟฉาย');
     torchOn=!torchOn;
-    await track.applyConstraints({ advanced:[{ torch:torchOn }] });
+    await track.applyConstraints({advanced:[{torch:torchOn}]});
     document.getElementById('torchBtn').textContent=torchOn?'💡':'🔦';
-  }catch(e){ showToast('twrn','⚠️','ไฟฉายไม่รองรับบนอุปกรณ์นี้'); torchOn=false; }
+  }catch(e){torchOn=false;showToast('twrn','⚠️','เปิดไฟฉายไม่ได้');console.error(e);}
 }
 
 function badge(m){const e=document.getElementById('camBadge');if(!m){e.style.display='none';return;}e.textContent=m;e.style.display='block';}
+
+// ── GUN SCANNER input handler ──
+// ปืนสแกนส่งค่าเป็น keyboard input แล้วจบด้วย Enter
+const gunInput=document.getElementById('gunInput');
+let gunBuffer='',gunTimer=null;
+
+gunInput.addEventListener('input',()=>{
+  gunBuffer+=gunInput.value;
+  gunInput.value='';
+  clearTimeout(gunTimer);
+  // ถ้าไม่มี input เพิ่มใน 80ms ถือว่าจบ barcode
+  gunTimer=setTimeout(()=>{
+    if(gunBuffer.trim()) fireGun(gunBuffer.trim());
+    gunBuffer='';
+  },80);
+});
+gunInput.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    clearTimeout(gunTimer);
+    if(gunBuffer.trim()) fireGun(gunBuffer.trim());
+    gunBuffer='';
+    gunInput.value='';
+  }
+});
+// keep focus on gun input when in gun mode
+document.addEventListener('click',()=>{
+  if(curMode==='gun') setTimeout(()=>gunInput.focus(),50);
+});
+
+function fireGun(code){
+  const el=document.getElementById('gunLast');
+  el.style.display='block';
+  el.textContent='ล่าสุด: '+code;
+  doScan(code);
+}
+
+// ── HAND ──
+function handScan(){const v=document.getElementById('handIn').value.trim();if(!v)return;doScan(v);document.getElementById('handIn').value='';}
+document.getElementById('handIn').addEventListener('keydown',e=>{if(e.key==='Enter')handScan();});
 
 // ── SCAN RESULT ──
 function doScan(code){
   if(!code||!code.trim()) return;
   code=code.trim();
   if(data.length===0){document.getElementById('ndo').classList.add('show');playSound('notfound');return;}
-  scanCount++;
-  document.getElementById('scanCnt').textContent=scanCount;
+  scanCount++;document.getElementById('scanCnt').textContent=scanCount;
   const thr=parseInt(document.getElementById('thr').value)||5;
   const item=data.find(i=>i.barcode===code);
   document.getElementById('scanIdle').style.display='none';
@@ -355,15 +485,14 @@ function doScan(code){
     document.getElementById('rsName').textContent='ไม่มีบาร์โค้ดนี้';
     document.getElementById('rsCode').textContent=code;
     document.getElementById('rsChips').innerHTML='';
-    showToast('terr','❌',`ไม่พบ: ${code}`);
-    return;
+    showToast('terr','❌',`ไม่พบ: ${code}`);return;
   }
-  const hq=item.qty!==null, qty=item.qty;
+  const hq=item.qty!==null,qty=item.qty;
   let cls,txt,snd;
-  if(!hq)        { cls='ok'; txt='✔ พบสินค้า';    snd='found'; }
-  else if(qty===0){ cls='out';txt='🚨 หมดสต๊อก!';  snd='out';   }
-  else if(qty<=thr){ cls='low';txt='⚠️ เหลือน้อย'; snd='low';   }
-  else           { cls='ok'; txt='✔ พบสินค้า';    snd='found'; }
+  if(!hq){cls='ok';txt='✔ พบสินค้า';snd='found';}
+  else if(qty===0){cls='out';txt='🚨 หมดสต๊อก!';snd='out';}
+  else if(qty<=thr){cls='low';txt='⚠️ เหลือน้อย';snd='low';}
+  else{cls='ok';txt='✔ พบสินค้า';snd='found';}
   playSound(snd);
   document.getElementById('rsStatus').className=`rs-status ${cls}`;
   document.getElementById('rsStatus').textContent=txt;
@@ -371,48 +500,68 @@ function doScan(code){
   document.getElementById('rsCode').textContent=item.barcode;
   const qc=qty===0?'rd':qty<=thr?'yw':'gn';
   let chips=`<div class="chip"><div class="chip-v ac">${item.box||'—'}</div><div class="chip-l">Box/ชั้น</div></div>`;
-  if(hq) chips+=`<div class="chip"><div class="chip-v ${qc}">${qty}</div><div class="chip-l">คงเหลือ</div></div>`;
+  if(hq)chips+=`<div class="chip"><div class="chip-v ${qc}">${qty}</div><div class="chip-l">คงเหลือ</div></div>`;
   document.getElementById('rsChips').innerHTML=chips;
-  if(snd==='out') showToast('terr','🚨',`"${item.name}" หมดสต๊อก!`);
-  else if(snd==='low') showToast('twrn','⚠️',`"${item.name}" เหลือ ${qty} ชิ้น`);
+  if(snd==='out')showToast('terr','🚨',`"${item.name}" หมดสต๊อก!`);
+  else if(snd==='low')showToast('twrn','⚠️',`"${item.name}" เหลือ ${qty} ชิ้น`);
   else showToast('tok','✔',`${item.name} — Box: ${item.box}`);
   lastHL=item.barcode;
 }
-
-function manualScan(){const v=document.getElementById('manualIn').value.trim();if(!v)return;doScan(v);document.getElementById('manualIn').value='';}
-document.getElementById('manualIn').addEventListener('keydown',e=>{if(e.key==='Enter')manualScan();});
 
 // ── CSV ──
 function handleFile(f){if(!f)return;const r=new FileReader();r.onload=e=>{let t=e.target.result;if(t.includes('\uFFFD')||t.includes('???')){const r2=new FileReader();r2.onload=ev=>parseCSV(ev.target.result,f.name);r2.readAsText(f,'TIS-620');return;}parseCSV(t,f.name);};r.readAsText(f,'UTF-8');}
 function parseCSV(text,name){const lines=text.trim().split(/\r?\n/);if(lines.length<2){setCsvSt('err','⚠️ ไฟล์ว่าง');return;}const d=lines[0].includes('\t')?'\t':',';const parse=l=>{const r=[];let c='',q=false;for(const ch of l){if(ch==='"'){q=!q;continue;}if(ch===d&&!q){r.push(c.trim());c='';continue;}c+=ch;}r.push(c.trim());return r;};headers=parse(lines[0]);rawRows=lines.slice(1).filter(l=>l.trim()).map(parse);setCsvSt('ok',`✔ "${name}" — ${rawRows.length} รายการ`);buildMapUI();}
 function setCsvSt(t,m){const e=document.getElementById('csvStat');e.className=`csv-stat ${t}`;e.textContent=m;}
 function buildMapUI(){const ids=['mBC','mBX','mNM','mQT'];const kw=[['barcode','บาร์โค้ด','code','รหัส'],['box','ชั้น','ตำแหน่ง'],['name','ชื่อ','product','สินค้า'],['qty','จำนวน','stock','คง','เหลือ']];ids.forEach((id,i)=>{const s=document.getElementById(id);s.innerHTML=(i===3?'<option value="">— ไม่มี —</option>':'')+headers.map(h=>`<option value="${h}">${h}</option>`).join('');const hl=headers.map(h=>h.toLowerCase());const mi=hl.findIndex(h=>kw[i].some(k=>h.includes(k)));if(mi>=0)s.value=headers[mi];});document.getElementById('mapCard').style.display='block';}
-function confirmMap(){const bc=document.getElementById('mBC').value,bx=document.getElementById('mBX').value,nm=document.getElementById('mNM').value,qt=document.getElementById('mQT').value;if(!bc||!bx||!nm){showToast('twrn','⚠️','เลือกคอลัมน์ที่จำเป็นก่อน');return;}data=rawRows.map(row=>{const o={};headers.forEach((h,i)=>o[h]=(row[i]||'').trim());return{barcode:(o[bc]||'').trim(),box:(o[bx]||'').trim(),name:(o[nm]||'').trim(),qty:qt?(parseInt(o[qt])||0):null};}).filter(r=>r.barcode);document.getElementById('mapCard').style.display='none';document.getElementById('ndo').classList.remove('show');document.getElementById('dataInfo').textContent=`${data.length} รายการในระบบ`;renderList();showToast('tok','✅',`โหลด ${data.length} รายการแล้ว`);goTab('scan');}
+function confirmMap(){const bc=document.getElementById('mBC').value,bx=document.getElementById('mBX').value,nm=document.getElementById('mNM').value,qt=document.getElementById('mQT').value;if(!bc||!bx||!nm){showToast('twrn','⚠️','เลือกคอลัมน์ที่จำเป็นก่อน');return;}data=rawRows.map(row=>{const o={};headers.forEach((h,i)=>o[h]=(row[i]||'').trim());return{barcode:(o[bc]||'').trim(),box:(o[bx]||'').trim(),name:(o[nm]||'').trim(),qty:qt?(parseInt(o[qt])||0):null};}).filter(r=>r.barcode);document.getElementById('mapCard').style.display='none';document.getElementById('ndo').classList.remove('show');document.getElementById('dataInfo').textContent=`${data.length} รายการในระบบ`;renderList();saveData();showToast('tok','✅',`โหลด ${data.length} รายการแล้ว`);goTab('scan');}
+
+// ── LOCAL STORAGE ──
+function saveData(){
+  try{localStorage.setItem('stockData',JSON.stringify(data));console.log('saved',data.length);}catch(e){console.warn('save failed',e);}
+}
+function loadData(){
+  try{
+    const s=localStorage.getItem('stockData');
+    if(!s)return;
+    data=JSON.parse(s);
+    if(!data.length)return;
+    document.getElementById('ndo').classList.remove('show');
+    document.getElementById('dataInfo').textContent=`${data.length} รายการในระบบ (โหลดจากที่บันทึกไว้)`;
+    setCsvSt('ok',`✔ โหลดข้อมูล ${data.length} รายการจากที่บันทึกไว้`);
+    renderList();
+    showToast('tok','💾',`โหลดข้อมูลเดิม ${data.length} รายการแล้ว`);
+  }catch(e){console.warn('load failed',e);}
+}
 
 // ── LIST ──
 function renderList(){const q=(document.querySelector('#scr-list .search-inner input')?.value||'').toLowerCase();const thr=parseInt(document.getElementById('thr').value)||5;let f=data.filter(i=>{const m=i.name.toLowerCase().includes(q)||i.barcode.includes(q)||i.box.toLowerCase().includes(q);if(!m)return false;if(curFilter==='low')return i.qty!==null&&i.qty>0&&i.qty<=thr;if(curFilter==='out')return i.qty!==null&&i.qty===0;if(curFilter==='ok')return i.qty===null||(i.qty!==null&&i.qty>thr);return true;});document.getElementById('st-t').textContent=data.length;document.getElementById('st-l').textContent=data.filter(i=>i.qty!==null&&i.qty>0&&i.qty<=thr).length;document.getElementById('st-o').textContent=data.filter(i=>i.qty!==null&&i.qty===0).length;const el=document.getElementById('items');if(f.length===0){el.innerHTML=`<div class="empty"><div class="e">🔍</div><p>ไม่พบรายการ</p></div>`;return;}el.innerHTML=f.map(item=>{const hq=item.qty!==null;let cls='',qc='var(--green)';if(hq&&item.qty===0){cls='out';qc='var(--red)';}else if(hq&&item.qty<=thr){cls='low';qc='var(--yellow)';}if(item.barcode===lastHL)cls='hl';return`<div class="item ${cls}" onclick="quickScan('${item.barcode}')"><div class="item-box">${item.box||'?'}</div><div class="item-info"><div class="item-name">${item.name}</div><div class="item-code">${item.barcode}</div></div><div class="item-right"><div class="item-qty" style="color:${!hq?'var(--ink2)':qc}">${hq?item.qty:'—'}</div><div class="item-ql">ชิ้น</div></div></div>`;}).join('');}
 function quickScan(bc){doScan(bc);goTab('scan');}
 function setF(f,btn){curFilter=f;document.querySelectorAll('.fp').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderList();}
-function clearAll(){if(!confirm('ล้างข้อมูลทั้งหมด?'))return;data=[];rawRows=[];headers=[];document.getElementById('ndo').classList.add('show');document.getElementById('csvStat').className='csv-stat';document.getElementById('dataInfo').textContent='ยังไม่มีข้อมูล';renderList();showToast('twrn','🗑','ล้างข้อมูลแล้ว');}
+function clearAll(){if(!confirm('ล้างข้อมูลทั้งหมด?'))return;data=[];rawRows=[];headers=[];localStorage.removeItem('stockData');document.getElementById('ndo').classList.add('show');document.getElementById('csvStat').className='csv-stat';document.getElementById('dataInfo').textContent='ยังไม่มีข้อมูล';renderList();showToast('twrn','🗑','ล้างข้อมูลแล้ว');}
 
 // ── TABS ──
 function goTab(t){
+  // ปิดกล้องเมื่อออกจากแท็บ scan
+  if(t!=='scan' && camRunning) stopCamera();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));
   document.getElementById('scr-'+t).classList.add('active');
   document.getElementById('tab-'+t).classList.add('active');
   if(t==='list') renderList();
+  if(t==='scan' && curMode==='gun') setTimeout(()=>gunInput.focus(),100);
 }
 
 // ── TOAST ──
 function showToast(cls,ico,msg){const t=document.getElementById('toast');document.getElementById('tI').textContent=ico;document.getElementById('tM').textContent=msg;t.className=`show ${cls}`;clearTimeout(toastT);toastT=setTimeout(()=>t.className='',3000);}
 
-// ── ซ่อนปุ่มไฟฉายบน iOS (Apple ไม่รองรับ Torch API บน web) ──
+// iOS: ซ่อนปุ่มไฟฉาย
 if(/iPad|iPhone|iPod/.test(navigator.userAgent))
   document.getElementById('torchBtn').style.display='none';
 
-// ── INIT ──
-startCamera();
+// โหลดข้อมูลที่บันทึกไว้
+loadData();
+// เริ่มต้นที่โหมดกล้อง (แต่ยังไม่เปิด)
+setMode('cam');
 </script>
 </body>
 </html>
