@@ -277,7 +277,7 @@ select{width:100%;background:var(--bg);border:1px solid var(--border);border-rad
           <div class="ds">รองรับ .csv — UTF-8 / TIS-620</div>
         </label>
       </div>
-      <input type="file" id="fileInput" accept=".csv,.txt" style="display:none" onchange="handleFile(this.files[0])">
+      <input type="file" id="fileInput" accept=".csv,.txt,text/csv,text/plain,text/*,application/csv,application/vnd.ms-excel" style="display:none" onchange="handleFile(this.files[0])">
       <button class="file-btn" onclick="document.getElementById('fileInput').click()">📂 เลือกไฟล์ CSV</button>
       <div class="csv-stat" id="csvStat"></div>
     </div>
