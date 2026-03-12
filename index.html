@@ -378,7 +378,7 @@ function beep(f,t,d,w='sine',v=0.9){
 function playSound(type){
   if(!soundOn)return; AC.resume();
   if(type==='found')   {beep(880,0,.10,'sine',0.9);beep(1320,.12,.18,'sine',0.9);}
-  if(type==='notfound'){beep(220,0,.5,'sawtooth',0.85);beep(180,.1,.4,'sawtooth',0.7);}
+  if(type==='notfound'){beep(220,0,.5,'square',0.85);beep(180,.1,.4,'sawtooth',0.7);}
   if(type==='low')     {[0,.20,.40].forEach(t=>beep(880,t,.15,'square',0.85));}
   if(type==='out')     {[0,.22,.44,.66,.88].forEach((t,i)=>beep(i%2?350:660,t,.18,'square',0.95));}
 }
